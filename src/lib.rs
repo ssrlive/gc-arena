@@ -25,6 +25,9 @@ mod unsize;
 #[cfg(feature = "allocator-api2")]
 pub mod allocator_api;
 
+#[cfg(feature = "enum-map")]
+mod enum_map;
+
 #[cfg(feature = "hashbrown")]
 mod hashbrown;
 
