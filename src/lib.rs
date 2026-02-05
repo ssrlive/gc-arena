@@ -25,8 +25,14 @@ mod unsize;
 #[cfg(feature = "allocator-api2")]
 pub mod allocator_api;
 
+#[cfg(feature = "enum-map")]
+mod enum_map;
+
 #[cfg(feature = "hashbrown")]
 mod hashbrown;
+
+#[cfg(feature = "slotmap")]
+mod slotmap;
 
 #[doc(hidden)]
 pub use gc_arena_derive::__unelide_lifetimes;
