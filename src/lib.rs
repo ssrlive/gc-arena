@@ -34,6 +34,9 @@ mod hashbrown;
 #[cfg(feature = "slotmap")]
 mod slotmap;
 
+#[cfg(feature = "smallvec")]
+mod smallvec;
+
 #[doc(hidden)]
 pub use gc_arena_derive::__unelide_lifetimes;
 
