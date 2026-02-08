@@ -31,6 +31,9 @@ mod enum_map;
 #[cfg(feature = "hashbrown")]
 mod hashbrown;
 
+#[cfg(feature = "indexmap")]
+mod indexmap;
+
 #[cfg(feature = "slotmap")]
 mod slotmap;
 
