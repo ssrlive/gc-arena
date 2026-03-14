@@ -1,18 +1,3 @@
-[workspace]
-resolver = "2"
-
-members = [
-    "derive",
-]
-
-[workspace.package]
-version = "0.5.3"
-authors = ["kyren <catherine@kyju.org>", "moulins", "Aaron Hill <aa1ronham@gmail.com>"]
-edition = "2024"
-license = "MIT"
-readme = "README.md"
-repository = "https://github.com/kyren/gc-arena"
-
 [package]
 name = "gc-arena"
 description = "safe, incrementally garbage collected arenas"
@@ -23,6 +8,22 @@ license.workspace = true
 readme.workspace = true
 repository.workspace = true
 
+[workspace]
+resolver = "2"
+members = ["derive"]
+
+[workspace.package]
+version = "0.5.3"
+authors = [
+    "kyren <catherine@kyju.org>",
+    "moulins",
+    "Aaron Hill <aa1ronham@gmail.com>",
+]
+edition = "2024"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/kyren/gc-arena"
+
 [features]
 default = ["std"]
 std = []
@@ -30,15 +31,17 @@ tracing = ["dep:tracing"]
 allocator-api2 = ["dep:allocator-api2", "hashbrown?/allocator-api2"]
 
 [dependencies]
-allocator-api2 = { version = "0.2", optional = true, default-features = false, features = ["alloc"] }
-enum-map = { version = "2.7", optional = true, default-features = false }
-gc-arena-derive = { path = "./derive", version = "0.5.3"}
-hashbrown = { version = "0.16", optional = true, default-features = false }
-indexmap = { version = "2.13", optional = true, default-features = false }
-slotmap = { version = "1.1", optional = true, default-features = false }
-smallvec = { version = "1.15", optional = true, default-features = false }
-tracing = { version = "0.1.37", optional = true, default-features = false }
+allocator-api2 = { version = "0.2.21", optional = true, default-features = false, features = [
+    "alloc",
+] }
+enum-map = { version = "2.7.3", optional = true, default-features = false }
+gc-arena-derive = { path = "./derive", version = "0.5.3" }
+hashbrown = { version = "0.16.1", optional = true, default-features = false }
+indexmap = { version = "2.13.0", optional = true, default-features = false }
+slotmap = { version = "1.1.1", optional = true, default-features = false }
+smallvec = { version = "1.15.1", optional = true, default-features = false }
+tracing = { version = "0.1.44", optional = true, default-features = false }
 
 [dev-dependencies]
-rand = "0.8"
-trybuild = "1.0"
+rand = { version = "0.10.0", features = ["thread_rng"] }
+trybuild = "1.0.116"

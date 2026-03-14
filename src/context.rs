@@ -110,7 +110,7 @@ impl<'gc> Deref for Finalization<'gc> {
 
     fn deref(&self) -> &Self::Target {
         // SAFETY: Finalization and Mutation are #[repr(transparent)]
-        unsafe { mem::transmute::<&Self, &Mutation>(&self) }
+        unsafe { mem::transmute::<&Self, &Mutation>(self) }
     }
 }
 
@@ -247,12 +247,12 @@ impl Context {
 
     #[inline]
     pub(crate) unsafe fn mutation_context<'gc>(&self) -> &Mutation<'gc> {
-        unsafe { mem::transmute::<&Self, &Mutation>(&self) }
+        unsafe { mem::transmute::<&Self, &Mutation>(self) }
     }
 
     #[inline]
     pub(crate) unsafe fn finalization_context<'gc>(&self) -> &Finalization<'gc> {
-        unsafe { mem::transmute::<&Self, &Finalization>(&self) }
+        unsafe { mem::transmute::<&Self, &Finalization>(self) }
     }
 
     #[inline]
@@ -294,7 +294,7 @@ impl Context {
     ) {
         let mut cx = PhaseGuard::enter(self, None);
 
-        if run_until == RunUntil::PayDebt && !(cx.metrics.allocation_debt() > 0.0) {
+        if run_until == RunUntil::PayDebt && cx.metrics.allocation_debt() <= 0.0 {
             cx.log_progress("GC: paused");
             return;
         }
@@ -357,7 +357,7 @@ impl Context {
                 Phase::Drop => unreachable!(),
             }
 
-            if run_until == RunUntil::PayDebt && !(cx.metrics.allocation_debt() > 0.0) {
+            if run_until == RunUntil::PayDebt && cx.metrics.allocation_debt() <= 0.0 {
                 break;
             }
         }
@@ -414,7 +414,7 @@ impl Context {
             fn barrier(this: &Context, parent: GcBox) {
                 this.make_gray_again(parent);
             }
-            barrier(&self, parent);
+            barrier(self, parent);
         }
     }
 
@@ -430,7 +430,7 @@ impl Context {
             fn barrier(this: &Context, parent: GcBox) {
                 this.make_gray_again(parent);
             }
-            barrier(&self, parent);
+            barrier(self, parent);
         }
     }
 
@@ -450,7 +450,7 @@ impl Context {
             fn barrier(this: &Context, child: GcBox) {
                 this.trace(child);
             }
-            barrier(&self, child);
+            barrier(self, child);
         }
     }
 
@@ -470,7 +470,7 @@ impl Context {
             fn barrier(this: &Context, child: GcBox) {
                 this.trace_weak(child);
             }
-            barrier(&self, child);
+            barrier(self, child);
         }
     }
 
@@ -579,10 +579,8 @@ impl Context {
         // triggering another write barrier.
         let next_gray = if let Some(gc_box) = self.gray.pop() {
             Some(gc_box)
-        } else if let Some(gc_box) = self.gray_again.pop() {
-            Some(gc_box)
         } else {
-            None
+            self.gray_again.pop()
         };
 
         if let Some(gc_box) = next_gray {
@@ -738,14 +736,14 @@ impl<'a> Deref for PhaseGuard<'a> {
 
     #[inline(always)]
     fn deref(&self) -> &Context {
-        &self.cx
+        self.cx
     }
 }
 
 impl<'a> DerefMut for PhaseGuard<'a> {
     #[inline(always)]
     fn deref_mut(&mut self) -> &mut Context {
-        &mut self.cx
+        self.cx
     }
 }
 
