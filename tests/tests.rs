@@ -25,7 +25,7 @@ fn simple_allocation() {
     });
 
     arena.mutate(|_mc, root| {
-        assert_eq!(*((*root).test), 42);
+        assert_eq!(*root.test, 42);
     });
 }
 
@@ -118,9 +118,11 @@ fn repeated_allocation_deallocation() {
     struct RefCounter(Rc<()>);
     static_collect!(RefCounter);
 
+    type TestMap<'gc> = RefLock<HashMap<i32, Gc<'gc, (i32, RefCounter)>>>;
+
     #[derive(Collect)]
     #[collect(no_drop)]
-    struct TestRoot<'gc>(Gc<'gc, RefLock<HashMap<i32, Gc<'gc, (i32, RefCounter)>>>>);
+    struct TestRoot<'gc>(Gc<'gc, TestMap<'gc>>);
 
     let r = RefCounter(Rc::new(()));
 
@@ -273,6 +275,7 @@ fn test_layouts() {
 }
 
 #[test]
+#[allow(clippy::assertions_on_constants)]
 fn derive_collect() {
     #[allow(unused)]
     #[derive(Collect)]
@@ -315,12 +318,12 @@ fn derive_collect() {
     #[collect(no_drop)]
     struct Test6(i32);
 
-    assert_eq!(Test1::NEEDS_TRACE, true);
-    assert_eq!(Test2::NEEDS_TRACE, false);
-    assert_eq!(Test3::NEEDS_TRACE, true);
-    assert_eq!(Test4::NEEDS_TRACE, false);
-    assert_eq!(Test5::NEEDS_TRACE, true);
-    assert_eq!(Test6::NEEDS_TRACE, false);
+    assert!(Test1::NEEDS_TRACE);
+    assert!(!Test2::NEEDS_TRACE);
+    assert!(Test3::NEEDS_TRACE);
+    assert!(!Test4::NEEDS_TRACE);
+    assert!(Test5::NEEDS_TRACE);
+    assert!(!Test6::NEEDS_TRACE);
 
     struct NoImpl;
 
@@ -342,8 +345,8 @@ fn derive_collect() {
         },
     }
 
-    assert_eq!(Test7::NEEDS_TRACE, false);
-    assert_eq!(Test8::NEEDS_TRACE, false);
+    assert!(!Test7::NEEDS_TRACE);
+    assert!(!Test8::NEEDS_TRACE);
 
     #[allow(unused)]
     #[derive(Collect)]
@@ -414,6 +417,7 @@ fn test_dynamic_roots() {
     let rc_a = Rc::new(12);
     let rc_b = Rc::new("hello".to_owned());
 
+    #[allow(clippy::redundant_closure)]
     let mut arena = Arena::<Rootable![DynamicRootSet<'_>]>::new(|mc| DynamicRootSet::new(mc));
 
     let root_a = arena
@@ -472,7 +476,9 @@ fn test_dynamic_roots() {
 #[test]
 #[should_panic]
 fn test_dynamic_bad_set() {
+    #[allow(clippy::redundant_closure)]
     let arena1 = Arena::<Rootable![DynamicRootSet<'_>]>::new(|mc| DynamicRootSet::new(mc));
+    #[allow(clippy::redundant_closure)]
     let arena2 = Arena::<Rootable![DynamicRootSet<'_>]>::new(|mc| DynamicRootSet::new(mc));
 
     let dyn_root = arena1.mutate(|mc, root| root.stash::<Rootable![i32]>(mc, Gc::new(mc, 44)));
@@ -833,7 +839,7 @@ fn basic_finalization() {
     });
 
     arena.finish_marking().unwrap().finalize(|fc, root| {
-        assert!(root.c.upgrade(&fc).is_some());
+        assert!(root.c.upgrade(fc).is_some());
         assert!(root.c.is_dead(fc));
         assert!(!root.d.is_dead(fc));
         root.c.resurrect(fc);
@@ -847,7 +853,7 @@ fn basic_finalization() {
     arena.finish_cycle();
 
     arena.finish_marking().unwrap().finalize(|fc, root| {
-        assert!(root.c.upgrade(&fc).is_some());
+        assert!(root.c.upgrade(fc).is_some());
         assert!(root.c.is_dead(fc));
         assert!(!root.d.is_dead(fc));
     });
@@ -855,7 +861,7 @@ fn basic_finalization() {
     arena.finish_cycle();
 
     arena.finish_marking().unwrap().finalize(|fc, root| {
-        assert!(root.c.upgrade(&fc).is_none());
+        assert!(root.c.upgrade(fc).is_none());
         assert!(root.c.is_dead(fc));
         assert!(!root.d.is_dead(fc));
     });
@@ -878,7 +884,7 @@ fn transitive_death() {
 
     arena.finish_marking().unwrap().finalize(|fc, root| {
         assert!(!root.b.is_dead(fc));
-        assert!(!Gc::is_dead(fc, *root.b.upgrade(&fc).unwrap()));
+        assert!(!Gc::is_dead(fc, *root.b.upgrade(fc).unwrap()));
     });
 
     arena.finish_cycle();
@@ -889,7 +895,7 @@ fn transitive_death() {
 
     arena.finish_marking().unwrap().finalize(|fc, root| {
         assert!(root.b.is_dead(fc));
-        assert!(Gc::is_dead(fc, *root.b.upgrade(&fc).unwrap()));
+        assert!(Gc::is_dead(fc, *root.b.upgrade(fc).unwrap()));
     });
 }
 
